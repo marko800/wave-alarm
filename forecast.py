@@ -15,15 +15,12 @@ spots = { "Kolifornia" : { "lat" : 54.1759, "lon" : 15.5833, "wind_window" : [22
          "Borncold" : { "lat" : 54.1414 , "lon" : 11.7530, "wind_window" : [225,350]}
         }
 
-def get_forecast(spots_dict = spots):
-    # retrieve the wind forecast for all locations in spots
-    for spot in spots_dict.keys():
-        spots_dict[spot]["forecast"] = request(spots_dict[spot]["lat"],spots_dict[spot]["lon"])
-    return spots_dict
 
 
 def alarm():
     # for each spot check if wind speed and direction are such that waves can be expected
+    # return message and display corresponding data
+
     spots_dict = get_forecast(spots)
 
     # loop through surf spots:
@@ -40,6 +37,10 @@ def alarm():
                 spots_dict[spot]["wind_window"][0] <= index[4] <= spots_dict[spot]["wind_window"][1]):
                 print(f"Yeewww, surf's up in {spot} on",row[:10])
                 alarm = 1
+        # if any surf is found, display the forecast
+        if alarm == 1:
+        #    display(data)
+            display(data.style.apply(color_rows, axis=1,args = (spot,spots_dict)))
         # if nothing is found, print a negative message
         if alarm == 0:
             print("Nope, nothing on the horizon :(")
@@ -47,11 +48,29 @@ def alarm():
 
 
 
+def color_rows(row,spot,spots_dict):
+    # highlight rows in the forecast with favourable conditions
+
+    if (row["wind_speed (m/s)"]*3.6 > 30) and (row["wind_gust (m/s)"]*3.6 > 40) and (
+                spots_dict[spot]["wind_window"][0] <= row["wind_deg (°)"] <= spots_dict[spot]["wind_window"][1]):
+        return ['background-color: lightcoral'] * len(row)
+    else:
+        return ['background-color: white'] * len(row)
+
+
+
+def get_forecast(spots_dict = spots):
+    # retrieve the wind forecast for all locations in spots
+
+    for spot in spots_dict.keys():
+        spots_dict[spot]["forecast"] = request(spots_dict[spot]["lat"],spots_dict[spot]["lon"])
+    return spots_dict
 
 
 
 def request(lat,lon):
-    # access api, retrieve (wind) data
+    # access api, retrieve forecast, return (wind) data in dataframe
+
     load_dotenv()
     API_key = os.getenv("API_key")
     url = f'https://api.openweathermap.org/data/3.0/onecall?lat={lat}&lon={lon}&exclude=current,minutely,hourly&appid={API_key}'
@@ -63,8 +82,8 @@ def request(lat,lon):
     df.sunset = df.sunset.apply(lambda x : datetime.utcfromtimestamp(x).strftime('%H:%M'))
 
     # rename columns and set date & time as index
-    df.rename({"wind_speed":"wind_speed (m/s)", "wind_gust":"wind_gust (m/s)","wind_deg":"wind_deg (°)"},axis = 1, inplace=True)
-    df = df.set_index(df.dt).drop(columns = "dt")
+    df.rename({"dt":"date", "wind_speed":"wind_speed (m/s)", "wind_gust":"wind_gust (m/s)","wind_deg":"wind_deg (°)"},axis = 1, inplace=True)
+    df = df.set_index(df.date).drop(columns = "date")
 
     # use windmap to create new column for wind direction
     df["wind_dir"] = df["wind_deg (°)"].apply(lambda x: windmap(x))
@@ -72,7 +91,7 @@ def request(lat,lon):
 
 
 def windmap(x):
-    # translates wind direction from degree to string like "SSE"
+    # translates wind direction given as degree 0 <= x <= 360 to string like "SSE"
 
     # dictionary for translation
     wind_directions = {
@@ -93,7 +112,7 @@ def windmap(x):
     "NW": 315,
     "NNW": 337.5}
 
-    # idea: generate buckets of width 2*step_size wind directions in degrees. find bucket index of x , return corresponding string
+    # generate buckets of width 2*step_size for wind directions in degrees. given a degree x, find bucket and return corresponding string
     step_size = 11.25
     direction_degrees = list(wind_directions.values())
     direction_names = list(wind_directions.keys())
