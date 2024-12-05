@@ -1,1 +1,3 @@
-.env
+forecast/.env
+forecast/__pycache__
+.ipynb_checkpoints
