@@ -30,10 +30,10 @@ def alarm():
         # set alarm counter
         alarm = 0
 
-        # check if conditions align:
+        # check conditions (wind speed/gusts > 25/30 km/h, correct wind direction)
         print(f"\n...checking forecast for {spot}...\n")
         for row, index in data.iterrows():
-            if (index[2]*3.6 > 30) and (index[3]*3.6 > 40) and (
+            if (index[2]*3.6 > 25) and (index[3]*3.6 > 30) and (
                 spots_dict[spot]["wind_window"][0] <= index[4] <= spots_dict[spot]["wind_window"][1]):
                 print(f"Yeewww, surf's up in {spot} on",row[:10])
                 alarm = 1
@@ -51,7 +51,7 @@ def alarm():
 def color_rows(row,spot,spots_dict):
     # highlight rows in the forecast with favourable conditions
 
-    if (row["wind_speed (m/s)"]*3.6 > 30) and (row["wind_gust (m/s)"]*3.6 > 40) and (
+    if (row["wind_speed (km/h)"] > 30) and (row["wind_gust (km/h)"] > 40) and (
                 spots_dict[spot]["wind_window"][0] <= row["wind_deg (°)"] <= spots_dict[spot]["wind_window"][1]):
         return ['background-color: lightcoral'] * len(row)
     else:
@@ -81,8 +81,12 @@ def request(lat,lon):
     df.sunrise = df.sunrise.apply(lambda x : datetime.utcfromtimestamp(x).strftime('%H:%M'))
     df.sunset = df.sunset.apply(lambda x : datetime.utcfromtimestamp(x).strftime('%H:%M'))
 
+    # round wind speed and gusts
+    df.wind_speed = (df.wind_speed*3.6).round(decimals=0).astype(int)
+    df.wind_gust = (df.wind_gust*3.6).round(decimals=0).astype(int)
+
     # rename columns and set date & time as index
-    df.rename({"dt":"date", "wind_speed":"wind_speed (m/s)", "wind_gust":"wind_gust (m/s)","wind_deg":"wind_deg (°)"},axis = 1, inplace=True)
+    df.rename({"dt":"date", "wind_speed":"wind_speed (km/h)", "wind_gust":"wind_gust (km/h)","wind_deg":"wind_deg (°)"},axis = 1, inplace=True)
     df = df.set_index(df.date).drop(columns = "date")
 
     # use windmap to create new column for wind direction
