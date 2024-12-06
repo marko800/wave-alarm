@@ -1,9 +1,6 @@
 import streamlit as st
 import pandas as pd
 from forecast import forecast
-from dotenv import load_dotenv
-import os
-import json
 
 st.markdown("""# Welcome to Kook Alarm!
 """)
@@ -15,9 +12,10 @@ if st.button('Get forecast'):
 
     # below is the streamlit version of the alarm function from forecast
 
-    load_dotenv()
-    spots = os.getenv("spots")
-    spots = json.loads(spots)
+    spots = { "Kolifornia" : { "lat" : 54.1759, "lon" : 15.5833, "wind_window" : [225,350]} ,
+         "Seabridge" : { "lat" : 54.4022 , "lon" : 13.6060 , "wind_window" : [10,170]},
+         "Valhalla" : { "lat" : 54.3929, "lon": 13.6803, "wind_window" : [0,45]},
+         "Borncold" : { "lat" : 54.1414 , "lon" : 11.7530, "wind_window" : [225,350]}}
 
     # get wind forecasts
     spots_dict = forecast.get_forecast(spots)
@@ -30,8 +28,7 @@ if st.button('Get forecast'):
         alarm = 0
 
         # check conditions (wind speed/gusts > 25/30 km/h, correct wind direction)
-        st.write(f"... checking forecast for {spot} ...")
-        st.write("")
+        st.write(f"\n...checking forecast for {spot}...\n")
         for row, index in data.iterrows():
             if (index[2] > 25) and (index[3] > 30) and (
                 spots_dict[spot]["wind_window"][0] <= index[4] <= spots_dict[spot]["wind_window"][1]):
@@ -45,4 +42,3 @@ if st.button('Get forecast'):
         # if nothing is found, print a negative message
         if alarm == 0:
             st.write("Nope, nothing on the horizon :(")
-            st.write("")

@@ -1,0 +1,11 @@
+Metadata-Version: 2.1
+Name: wave-alarm
+Version: 0.0.0
+Requires-Dist: pandas
+Requires-Dist: requests
+Requires-Dist: python-dotenv
+Requires-Dist: datetime
+Requires-Dist: dotenv
+Requires-Dist: streamlit
+Requires-Dist: ipython
+Requires-Dist: ipykernel

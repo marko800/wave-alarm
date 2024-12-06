@@ -6,12 +6,15 @@ from datetime import datetime
 import requests
 from dotenv import load_dotenv
 import os
-import json
 
 
-load_dotenv()
-spots = os.getenv("spots")
-spots = json.loads(spots)
+# below is the list of surf spots we want to keep an eye on with their relevant geographical data
+spots = { "Kolifornia" : { "lat" : 54.1759, "lon" : 15.5833, "wind_window" : [225,350]} ,
+         "Seabridge" : { "lat" : 54.4022 , "lon" : 13.6060 , "wind_window" : [10,170]},
+         "Valhalla" : { "lat" : 54.3929, "lon": 13.6803, "wind_window" : [0,45]},
+         "Borncold" : { "lat" : 54.1414 , "lon" : 11.7530, "wind_window" : [225,350]}
+        }
+
 
 
 def windmap(x):
@@ -65,7 +68,7 @@ def request(lat,lon):
     df.sunrise = df.sunrise.apply(lambda x : datetime.utcfromtimestamp(x).strftime('%H:%M'))
     df.sunset = df.sunset.apply(lambda x : datetime.utcfromtimestamp(x).strftime('%H:%M'))
 
-    # convert wind speed and gusts to km/h, and round to int
+    # round wind speed and gusts
     df.wind_speed = (df.wind_speed*3.6).round(decimals=0).astype(int)
     df.wind_gust = (df.wind_gust*3.6).round(decimals=0).astype(int)
 
@@ -80,7 +83,7 @@ def request(lat,lon):
 
 
 def get_forecast(spots_dict = spots):
-    # retrieve the wind forecast for all locations
+    # retrieve the wind forecast for all locations in spots
 
     for spot in spots_dict.keys():
         spots_dict[spot]["forecast"] = request(spots_dict[spot]["lat"],spots_dict[spot]["lon"])
@@ -91,7 +94,7 @@ def get_forecast(spots_dict = spots):
 def color_rows(row,spot,spots_dict):
     # highlight rows in the forecast with favourable conditions
 
-    if (row["wind_speed (km/h)"] > 25) and (row["wind_gust (km/h)"] > 30) and (
+    if (row["wind_speed (km/h)"] > 25) and (row["wind_gust (km/h)"] > 25) and (
                 spots_dict[spot]["wind_window"][0] <= row["wind_deg (°)"] <= spots_dict[spot]["wind_window"][1]):
         return ['background-color: lightcoral'] * len(row)
     else:
@@ -113,7 +116,7 @@ def alarm():
         alarm = 0
 
         # check conditions (wind speed/gusts > 25/30 km/h, correct wind direction)
-        print(f"\n... checking forecast for {spot} ...\n")
+        print(f"\n...checking forecast for {spot}...\n")
         for row, index in data.iterrows():
             if (index[2] > 25) and (index[3] > 30) and (
                 spots_dict[spot]["wind_window"][0] <= index[4] <= spots_dict[spot]["wind_window"][1]):
