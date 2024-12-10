@@ -89,9 +89,18 @@ def get_forecast(spots_dict = spots):
 
 
 def color_rows(row,spot,spots_dict):
-    # highlight rows in the forecast with favourable conditions
+    # highlight rows in the forecast with favourable conditions, color code by strenght of wind
 
-    if (row["wind_speed (km/h)"] > 25) and (row["wind_gust (km/h)"] > 30) and (
+    if (25 < row["wind_speed (km/h)"] <= 30) and (30 < row["wind_gust (km/h)"]) and (
+                spots_dict[spot]["wind_window"][0] <= row["wind_deg (°)"] <= spots_dict[spot]["wind_window"][1]):
+        return ['background-color: lightgreen'] * len(row)
+    elif (30 < row["wind_speed (km/h)"] <= 40) and (30 < row["wind_gust (km/h)"]) and (
+                spots_dict[spot]["wind_window"][0] <= row["wind_deg (°)"] <= spots_dict[spot]["wind_window"][1]):
+        return ['background-color: yellow'] * len(row)
+    elif (40 < row["wind_speed (km/h)"] <= 50) and (30 < row["wind_gust (km/h)"]) and (
+                spots_dict[spot]["wind_window"][0] <= row["wind_deg (°)"] <= spots_dict[spot]["wind_window"][1]):
+        return ['background-color: lightsalmon'] * len(row)
+    elif (50 < row["wind_speed (km/h)"]) and (30 < row["wind_gust (km/h)"]) and (
                 spots_dict[spot]["wind_window"][0] <= row["wind_deg (°)"] <= spots_dict[spot]["wind_window"][1]):
         return ['background-color: lightcoral'] * len(row)
     else:
@@ -129,7 +138,3 @@ def alarm():
         if alarm == 0:
             print("Nope, nothing on the horizon :(")
     return None
-
-
-# test run
-alarm()
