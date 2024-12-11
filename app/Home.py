@@ -52,8 +52,8 @@ if st.button('Get pitted'):
         st.write(f"... checking forecast for {spot} ...")
         st.write("")
         for row, index in data.iterrows():
-            if (index[2] > 25) and (index[3] > 30) and (
-                spots_dict[spot]["wind_window"][0] <= index[4] <= spots_dict[spot]["wind_window"][1]):
+            if (index[0] > 25) and (index[1] > 30) and (
+                spots_dict[spot]["wind_window"][0] <= index[3] <= spots_dict[spot]["wind_window"][1]):
                 alarm = 1
         # if any surf is found, display the forecast
         if alarm == 1:
