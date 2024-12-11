@@ -9,11 +9,11 @@ import os
 import json
 
 
-# load sensitive data
-load_dotenv()
-spots = os.getenv("spots")
-spots = json.loads(spots)
-API_key = os.getenv("API_key")
+# load sensitive data (if local)
+#load_dotenv()
+#spots = os.getenv("spots")
+#spots = json.loads(spots)
+#API_key = os.getenv("API_key")
 
 
 
@@ -55,7 +55,7 @@ def windmap(x):
 
 
 
-def request(lat,lon):
+def request(API_key,lat,lon):
     # access api, retrieve forecast, return (wind) data in dataframe
 
     url = f'https://api.openweathermap.org/data/3.0/onecall?lat={lat}&lon={lon}&exclude=current,minutely,hourly&appid={API_key}'
@@ -80,11 +80,11 @@ def request(lat,lon):
 
 
 
-def get_forecast(spots_dict = spots):
-    # retrieve the wind forecast for all locations
+def get_forecast(API_key,spots_dict):
+    # retrieve the wind forecast for all locations, spots_dict is a list of locations, saved in secrets.toml/.env
 
     for spot in spots_dict.keys():
-        spots_dict[spot]["forecast"] = request(spots_dict[spot]["lat"],spots_dict[spot]["lon"])
+        spots_dict[spot]["forecast"] = request(API_key,spots_dict[spot]["lat"],spots_dict[spot]["lon"])
     return spots_dict
 
 
@@ -106,36 +106,3 @@ def color_rows(row,spot,spots_dict):
         return ['background-color: lightcoral'] * len(row)
     else:
         return ['background-color: white'] * len(row)
-
-
-
-def alarm():
-    # for each spot check if wind speed and direction are such that waves can be expected
-    # return message and display corresponding data
-
-    spots_dict = get_forecast(spots)
-
-    # loop through surf spots:
-    for spot in spots_dict.keys():
-        # retrieve data
-        data = spots_dict[spot]["forecast"]
-        # set alarm counter
-        alarm = 0
-
-        # check conditions (wind speed/gusts > 25/30 km/h, correct wind direction)
-        print(f"\n... checking forecast for {spot} ...\n")
-        for row, index in data.iterrows():
-            if (index[2] > 25) and (index[3] > 30) and (
-                spots_dict[spot]["wind_window"][0] <= index[4] <= spots_dict[spot]["wind_window"][1]):
-                print(f"Yeewww, surf's up in {spot} on",row[:10])
-                alarm = 1
-        # if any surf is found, display the forecast
-        if alarm == 1:
-            # in terminal:
-            print(data)
-            # in jupyter:
-            #display(data.style.apply(color_rows, axis=1,args = (spot,spots_dict)))
-        # if nothing is found, print a negative message
-        if alarm == 0:
-            print("Nope, nothing on the horizon :(")
-    return None

@@ -19,6 +19,6 @@ if -90 <= lat <= 90 and -180 <= lon <= 180:
         print('button clicked!')
 
         API_key = st.secrets["general"]["API_key"]
-        st.table(forecast.request(lat, lon))
+        st.table(forecast.request(API_key, lat, lon))
 else:
     st.error("Wrong input. Enter valid latitude (-90 to 90) and longitude (-180 to 180).")

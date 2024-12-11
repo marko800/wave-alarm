@@ -5,8 +5,6 @@ import sys
 import os
 # Add the parent directory to the Python path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-
-
 from forecast import forecast
 
 
@@ -24,11 +22,7 @@ with st.sidebar:
 
 
 
-
-
-st.title("""Welcome to Kook Alarm!
-""")
-
+st.title("Welcome to Kook Alarm!")
 
 st.write("Click the button below to get alarmed for some surfspots in the Baltic sea:")
 
@@ -36,9 +30,9 @@ st.write("Click the button below to get alarmed for some surfspots in the Baltic
 if st.button('Get pitted'):
     print('button clicked!')
 
-    # below is the streamlit version of the alarm function from forecast
+    # retrieve forecast for all locations, add to dictionary of spots and conditions, then check for surf
 
-    #load API key and sensitive data from secrets.toml and convert it to dictionary
+    #load API key and spots data from secrets.toml and convert spots to dictionary
     API_key = st.secrets["general"]["API_key"]
     spots_raw = st.secrets["general"]["spots"]
     spots = {name: {
@@ -48,7 +42,7 @@ if st.button('Get pitted'):
                     }  for name, spot in spots_raw.items()}
 
     # get wind forecasts
-    spots_dict = forecast.get_forecast(spots)
+    spots_dict = forecast.get_forecast(API_key,spots)
 
     # loop through surf spots
     for spot in spots_dict.keys():
