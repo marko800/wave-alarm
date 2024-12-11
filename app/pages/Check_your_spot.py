@@ -15,7 +15,7 @@ lon = st.number_input('Insert longitude', format="%.6f")
 # check for valid input, then use lat and lon as input for request function and display result
 
 if -90 <= lat <= 90 and -180 <= lon <= 180:
-    if st.button('Get forecast'):
+    if st.button('View forecast'):
         print('button clicked!')
 
         API_key = st.secrets["general"]["API_key"]

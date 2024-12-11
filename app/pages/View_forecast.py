@@ -10,7 +10,7 @@ st.set_page_config(page_title="View forecast", page_icon="🏄‍♂️")
 st.write("Click the button to see full forecast for all spots.")
 
 
-if st.button('Get pitted'):
+if st.button('View forecast'):
     print('button clicked!')
 
     # retrieve data and display every forecast, one by one
