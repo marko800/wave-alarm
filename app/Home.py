@@ -1,9 +1,6 @@
 import streamlit as st
 import pandas as pd
 from forecast import forecast
-from dotenv import load_dotenv
-import os
-import json
 
 
 
@@ -34,9 +31,14 @@ if st.button('Get pitted'):
 
     # below is the streamlit version of the alarm function from forecast
 
-    load_dotenv()
-    spots = os.getenv("spots")
-    spots = json.loads(spots)
+    #load API key and sensitive data from secrets.toml and convert it to dictionary
+    API_key = st.secrets["general"]["API_key"]
+    spots_raw = st.secrets["general"]["spots"]
+    spots = {name: {
+                    "lat": spot["lat"],
+                    "lon": spot["lon"],
+                    "wind_window": spot["wind_window"],
+                    }  for name, spot in spots_raw.items()}
 
     # get wind forecasts
     spots_dict = forecast.get_forecast(spots)

@@ -1,3 +1,4 @@
 forecast/.env
 forecast/__pycache__
 .ipynb_checkpoints
+.streamlit/secrets.toml

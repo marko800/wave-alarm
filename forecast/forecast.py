@@ -9,9 +9,12 @@ import os
 import json
 
 
+# load sensitive data
 load_dotenv()
 spots = os.getenv("spots")
 spots = json.loads(spots)
+API_key = os.getenv("API_key")
+
 
 
 def windmap(x):
@@ -55,8 +58,6 @@ def windmap(x):
 def request(lat,lon):
     # access api, retrieve forecast, return (wind) data in dataframe
 
-    load_dotenv()
-    API_key = os.getenv("API_key")
     url = f'https://api.openweathermap.org/data/3.0/onecall?lat={lat}&lon={lon}&exclude=current,minutely,hourly&appid={API_key}'
     df = pd.DataFrame(requests.get(url).json()["daily"])[["dt","sunrise","sunset","wind_speed","wind_gust","wind_deg"]]
 
