@@ -76,6 +76,10 @@ def request(API_key,lat,lon):
 
     # use windmap to create new column for wind direction
     df["wind_dir"] = df["wind_deg (°)"].apply(lambda x: windmap(x))
+
+    # reorder columns
+    new_order = ["wind_speed (km/h)", "wind_gust (km/h)", "wind_dir", "wind_deg (°)", "sunrise", "sunset"]
+    df = df[new_order]
     return df
 
 
