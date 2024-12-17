@@ -48,7 +48,7 @@ if st.button('Get pitted'):
         # reorder columns, should be done by get_forecast / request, but somehow doesn't work
         new_order = ["wind_speed (km/h)", "wind_gust (km/h)", "wind_dir", "wind_deg (°)", "sunrise", "sunset"]
         data = data[new_order]
-        
+
         # set alarm counter
         alarm = 0
 
@@ -73,4 +73,5 @@ if st.button('Get pitted'):
 
 
 # TODO:
-# add spot Nohoney (window = [0,80] or 2 windows or [27^0,80]?)
+# add spot Nohoney (window = [0,80] or 2 windows or [270,80]?)
+# display wind direction as arrow
