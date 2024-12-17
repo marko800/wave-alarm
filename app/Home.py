@@ -1,9 +1,3 @@
-import sys
-import os
-
-# add project root directory to Python path
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../')))
-
 import streamlit as st
 import pandas as pd
 
