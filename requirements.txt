@@ -1,5 +1,12 @@
+# project dependencies
 streamlit
 pandas
 requests
 python-dotenv
+
+# local package
 -e .
+
+# build tools
+setuptools>=42
+wheel

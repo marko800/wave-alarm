@@ -8,8 +8,6 @@ setup(
         'pandas',
         'requests',
         'python-dotenv',
-        'datetime',
-        'dotenv',
         'streamlit',
         'ipython',
         'ipykernel'
