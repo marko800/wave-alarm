@@ -72,6 +72,4 @@ if st.button('Get pitted'):
             st.write("")
 
 
-# TODO:
-# add spot Nohoney (window = [0,80] or 2 windows or [270,80]?)
-# display wind direction as arrow
+
