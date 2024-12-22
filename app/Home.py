@@ -57,9 +57,9 @@ if st.button('Get pitted'):
         if alarm == 1:
             #st.dataframe(data.style.apply(forecast.color_rows, axis=1,args = (spot,spots_dict)),
             #             width=2000, height=320)
-            st.write(f"Yeewww, surf's up in {spot} :")
+            st.write(f"Yeewww, surf's up in {spot}:")
             st.table(data.style.apply(forecast.color_rows, axis=1,args = (spot,spots_dict)))
         # if nothing is found, print a negative message
         if alarm == 0:
-            st.write(f"Nope, nothing on the horizon for {spot} :(")
+            st.write(f"Nope, nothing on the horizon for {spot}.")
             st.write("")
