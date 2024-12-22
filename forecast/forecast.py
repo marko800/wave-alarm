@@ -7,13 +7,11 @@ import requests
 from dotenv import load_dotenv
 import os
 import json
+import openmeteo_requests
+import requests_cache
+from retry_requests import retry
 
 
-# load sensitive data (if local)
-#load_dotenv()
-#spots = os.getenv("spots")
-#spots = json.loads(spots)
-#API_key = os.getenv("API_key")
 
 
 
@@ -55,40 +53,77 @@ def windmap(x):
 
 
 
-def request(API_key,lat,lon):
+def request(lat,lon):
     # access api, retrieve forecast, return (wind) data in dataframe
 
-    url = f'https://api.openweathermap.org/data/3.0/onecall?lat={lat}&lon={lon}&exclude=current,minutely,hourly&appid={API_key}'
-    df = pd.DataFrame(requests.get(url).json()["daily"])[["dt","sunrise","sunset","wind_speed","wind_gust","wind_deg"]]
+    # --- code from Open-Meteo --
+    # Setup the Open-Meteo API client with cache and retry on error
+    cache_session = requests_cache.CachedSession('.cache', expire_after = 3600)
+    retry_session = retry(cache_session, retries = 5, backoff_factor = 0.2)
+    openmeteo = openmeteo_requests.Client(session = retry_session)
 
-    # change unix to normal time
-    df.dt = df.dt.apply(lambda x : datetime.utcfromtimestamp(x).strftime('%d-%m-%Y %H:%M:%S'))
-    df.sunrise = df.sunrise.apply(lambda x : datetime.utcfromtimestamp(x).strftime('%H:%M'))
-    df.sunset = df.sunset.apply(lambda x : datetime.utcfromtimestamp(x).strftime('%H:%M'))
+    # Make sure all required weather variables are listed here
+    # The order of variables in hourly or daily is important to assign them correctly below
+    url = "https://api.open-meteo.com/v1/forecast"
+    params = {
+        "latitude": lat,
+        "longitude": lon,
+        "hourly": ["wind_speed_10m", "wind_direction_10m", "wind_gusts_10m"],
+        "timezone": "auto",
+        "temporal_resolution": "hourly_3"
+    }
+    responses = openmeteo.weather_api(url, params=params)
 
-    # convert wind speed and gusts to km/h, and round to int
-    df.wind_speed = (df.wind_speed*3.6).round(decimals=0).astype(int)
-    df.wind_gust = (df.wind_gust*3.6).round(decimals=0).astype(int)
+    # Process first location. Add a for-loop for multiple locations or weather models
+    response = responses[0]
+
+    # Process hourly data. The order of variables needs to be the same as requested.
+    hourly = response.Hourly()
+    hourly_wind_speed_10m = hourly.Variables(0).ValuesAsNumpy()
+    hourly_wind_direction_10m = hourly.Variables(1).ValuesAsNumpy()
+    hourly_wind_gusts_10m = hourly.Variables(2).ValuesAsNumpy()
+
+    hourly_data = {"date": pd.date_range(
+        start = pd.to_datetime(hourly.Time(), unit = "s", utc = True),
+        end = pd.to_datetime(hourly.TimeEnd(), unit = "s", utc = True),
+        freq = pd.Timedelta(seconds = hourly.Interval()),
+        inclusive = "left"
+    )}
+    hourly_data["wind_speed_10m"] = hourly_wind_speed_10m
+    hourly_data["wind_direction_10m"] = hourly_wind_direction_10m
+    hourly_data["wind_gusts_10m"] = hourly_wind_gusts_10m
+
+    hourly_df = pd.DataFrame(data = hourly_data)
+    # --- code from Open-Meteo ---
+
+    # massage hourly_df into format that is used in the app
+
+    # change time format
+    hourly_df['date'] = hourly_df['date'].dt.strftime('%Y-%m-%d %H:%M')
+
+    # round data to int
+    hourly_df["wind_speed_10m"] = hourly_df["wind_speed_10m"].round(decimals=0).astype(int)
+    hourly_df["wind_gusts_10m"] = hourly_df["wind_gusts_10m"].round(decimals=0).astype(int)
+    hourly_df["wind_direction_10m"] = hourly_df["wind_direction_10m"].round(decimals=0).astype(int)
 
     # rename columns and set date & time as index
-    df.rename({"dt":"date", "wind_speed":"wind_speed (km/h)", "wind_gust":"wind_gust (km/h)","wind_deg":"wind_deg (°)"},axis = 1, inplace=True)
-    df = df.set_index(df.date).drop(columns = "date")
+    hourly_df.rename({"wind_speed_10m":"wind_speed (km/h)", "wind_gusts_10m":"wind_gusts (km/h)","wind_direction_10m":"wind_deg (°)"},axis = 1, inplace=True)
+    hourly_df = hourly_df.set_index(hourly_df.date).drop(columns = "date")
 
     # use windmap to create new column for wind direction
-    df["wind_dir"] = df["wind_deg (°)"].apply(lambda x: windmap(x))
+    hourly_df["wind_dir"] = hourly_df["wind_deg (°)"].apply(lambda x: windmap(x))
 
     # reorder columns
-    new_order = ["wind_speed (km/h)", "wind_gust (km/h)", "wind_dir", "wind_deg (°)", "sunrise", "sunset"]
-    df = df[new_order]
-    return df
+    new_order = ["wind_speed (km/h)", "wind_gusts (km/h)", "wind_dir", "wind_deg (°)"]
+    return hourly_df[new_order]
 
 
 
-def get_forecast(API_key,spots_dict):
+def get_forecast(spots_dict):
     # retrieve the wind forecast for all locations, spots_dict is a list of locations, saved in secrets.toml/.env
 
     for spot in spots_dict.keys():
-        spots_dict[spot]["forecast"] = request(API_key,spots_dict[spot]["lat"],spots_dict[spot]["lon"])
+        spots_dict[spot]["forecast"] = request(spots_dict[spot]["lat"],spots_dict[spot]["lon"])
     return spots_dict
 
 
@@ -96,16 +131,16 @@ def get_forecast(API_key,spots_dict):
 def color_rows(row,spot,spots_dict):
     # highlight rows in the forecast with favourable conditions, color code by strenght of wind
 
-    if (25 < row["wind_speed (km/h)"] <= 30) and (30 < row["wind_gust (km/h)"]) and (
+    if (25 < row["wind_speed (km/h)"] <= 30) and (30 < row["wind_gusts (km/h)"]) and (
                 spots_dict[spot]["wind_window"][0] <= row["wind_deg (°)"] <= spots_dict[spot]["wind_window"][1]):
         return ['background-color: lightgreen'] * len(row)
-    elif (30 < row["wind_speed (km/h)"] <= 40) and (30 < row["wind_gust (km/h)"]) and (
+    elif (30 < row["wind_speed (km/h)"] <= 40) and (30 < row["wind_gusts (km/h)"]) and (
                 spots_dict[spot]["wind_window"][0] <= row["wind_deg (°)"] <= spots_dict[spot]["wind_window"][1]):
         return ['background-color: yellow'] * len(row)
-    elif (40 < row["wind_speed (km/h)"] <= 50) and (30 < row["wind_gust (km/h)"]) and (
+    elif (40 < row["wind_speed (km/h)"] <= 50) and (30 < row["wind_gusts (km/h)"]) and (
                 spots_dict[spot]["wind_window"][0] <= row["wind_deg (°)"] <= spots_dict[spot]["wind_window"][1]):
         return ['background-color: lightsalmon'] * len(row)
-    elif (50 < row["wind_speed (km/h)"]) and (30 < row["wind_gust (km/h)"]) and (
+    elif (50 < row["wind_speed (km/h)"]) and (30 < row["wind_gusts (km/h)"]) and (
                 spots_dict[spot]["wind_window"][0] <= row["wind_deg (°)"] <= spots_dict[spot]["wind_window"][1]):
         return ['background-color: lightcoral'] * len(row)
     else:

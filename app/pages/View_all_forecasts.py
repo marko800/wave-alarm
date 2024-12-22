@@ -24,7 +24,7 @@ if st.button('View forecast'):
                     }  for name, spot in spots_raw.items()}
 
     # get wind forecasts
-    spots_dict = forecast.get_forecast(API_key,spots)
+    spots_dict = forecast.get_forecast(spots)
 
     # loop through surf spots
     for spot in spots_dict.keys():

@@ -38,26 +38,19 @@ if st.button('Get pitted'):
                     }  for name, spot in spots_raw.items()}
 
     # get wind forecasts
-    spots_dict = forecast.get_forecast(API_key,spots)
+    spots_dict = forecast.get_forecast(spots)
 
     # loop through surf spots
     for spot in spots_dict.keys():
         # retrieve data for spot
         data = spots_dict[spot]["forecast"]
 
-        # reorder columns, should be done by get_forecast / request, but somehow doesn't work
-        new_order = ["wind_speed (km/h)", "wind_gust (km/h)", "wind_dir", "wind_deg (°)", "sunrise", "sunset"]
-        data = data[new_order]
-
         # set alarm counter
         alarm = 0
 
         # check conditions (wind speed/gusts > 25/30 km/h, correct wind direction)
-        st.write("")
-        st.write(f"... checking forecast for {spot} ...")
-        st.write("")
         for row, index in data.iterrows():
-            if (index["wind_speed (km/h)"] > 25) and (index["wind_gust (km/h)"] > 30) and (
+            if (index["wind_speed (km/h)"] > 25) and (index["wind_gusts (km/h)"] > 30) and (
                 spots_dict[spot]["wind_window"][0] <= index["wind_deg (°)"] <= spots_dict[spot]["wind_window"][1]):
                 alarm = 1
         # if any surf is found, display the forecast
@@ -68,8 +61,5 @@ if st.button('Get pitted'):
             st.table(data.style.apply(forecast.color_rows, axis=1,args = (spot,spots_dict)))
         # if nothing is found, print a negative message
         if alarm == 0:
-            st.write("Nope, nothing on the horizon :(")
+            st.write(f"Nope, nothing on the horizon for {spot} :(")
             st.write("")
-
-
-

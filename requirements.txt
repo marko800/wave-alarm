@@ -3,6 +3,10 @@ streamlit
 pandas
 requests
 python-dotenv
+# new version (using openmeteo)
+openmeteo_requests
+requests_cache
+retry_requests
 
 # local package
 -e .
