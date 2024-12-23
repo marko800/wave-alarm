@@ -28,8 +28,7 @@ if st.button('Get pitted'):
 
     # retrieve forecast for all locations, add to dictionary of spots and conditions, then check for surf
 
-    #load API key and spots data from secrets.toml and convert spots to dictionary
-    API_key = st.secrets["general"]["API_key"]
+    #load spots data from secrets.toml and convert spots to dictionary
     spots_raw = st.secrets["general"]["spots"]
     spots = {name: {
                     "lat": spot["lat"],
@@ -72,7 +71,7 @@ if st.button('Get pitted'):
             for row in surf_rows:
                 surrounding_rows = data.iloc[max(0, row - 2) : min(len(data), row + 3)]
                 st.table(surrounding_rows.style.apply(forecast.color_rows, axis=1, args=(spot, spots_dict)))
-                
+
         # if nothing is found, print a negative message
         else:
             st.write(f"Nope, nothing on the horizon for {spot}.")

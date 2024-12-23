@@ -15,7 +15,6 @@ if st.button('View forecast'):
 
     # retrieve data and display every forecast, one by one
 
-    API_key = st.secrets["general"]["API_key"]
     spots_raw = st.secrets["general"]["spots"]
     spots = {name: {
                     "lat": spot["lat"],
