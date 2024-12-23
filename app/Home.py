@@ -65,12 +65,13 @@ if st.button('Get pitted'):
 
         # if any surf is found, display the relevant part of the forecast
         if alarm == 1:
-            #st.dataframe(data.style.apply(forecast.color_rows, axis=1,args = (spot,spots_dict)),
-            #             width=2000, height=320)
             st.write(f"Yeewww, surf's up in {spot}:")
-            for row in surf_rows:
-                surrounding_rows = data.iloc[max(0, row - 2) : min(len(data), row + 3)]
-                st.table(surrounding_rows.style.apply(forecast.color_rows, axis=1, args=(spot, spots_dict)))
+
+            start_row = min(surf_rows)
+            end_row = max(surf_rows)
+            surrounding_rows = data.iloc[max(0, start_row - 2) : min(len(data), end_row + 4)]
+            
+            st.table(surrounding_rows.style.apply(forecast.color_rows, axis=1, args=(spot, spots_dict)))
 
         # if nothing is found, print a negative message
         else:
