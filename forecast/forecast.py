@@ -78,6 +78,8 @@ def get_arrow(direction):
 def request(lat,lon):
     # access api, retrieve forecast, return (wind) data in dataframe
 
+
+
     # --- code from Open-Meteo -- (start)
 
     # Setup the Open-Meteo API client with cache and retry on error
@@ -120,6 +122,8 @@ def request(lat,lon):
 
     # --- code from Open-Meteo --- (end)
 
+
+
     # massage hourly_df into format that is used in the app
 
     # change time format
@@ -135,13 +139,12 @@ def request(lat,lon):
     hourly_df = hourly_df.set_index(hourly_df.date).drop(columns = "date")
 
     # use windmap to create new column for wind direction
-    hourly_df["wind_dir"] = hourly_df["wind_deg (°)"].apply(lambda x: windmap(x))
+    #hourly_df["wind_dir"] = hourly_df["wind_deg (°)"].apply(lambda x: windmap(x))
 
-    # add arrows
-    hourly_df['wind_arrow'] = hourly_df["wind_deg (°)"].apply(get_arrow)
+    hourly_df["wind_dir"] = hourly_df["wind_deg (°)"].apply(lambda x: f"{get_arrow(x)} {windmap(x)}")
 
     # reorder columns
-    new_order = ["wind_speed (km/h)", "wind_gusts (km/h)", "wind_arrow", "wind_dir", "wind_deg (°)"]
+    new_order = ["wind_speed (km/h)", "wind_gusts (km/h)", "wind_dir", "wind_deg (°)"]
     return hourly_df[new_order]
 
 
