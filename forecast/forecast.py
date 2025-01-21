@@ -139,12 +139,12 @@ def request(lat,lon):
     hourly_df = hourly_df.set_index(hourly_df.date).drop(columns = "date")
 
     # use windmap to create new column for wind direction
-    #hourly_df["wind_dir"] = hourly_df["wind_deg (°)"].apply(lambda x: windmap(x))
+    hourly_df["wind_dir"] = hourly_df["wind_deg (°)"].apply(lambda x: windmap(x))
 
-    hourly_df["wind_dir"] = hourly_df["wind_deg (°)"].apply(lambda x: f"{get_arrow(x)} {windmap(x)}")
+    hourly_df["wind_arrow"] = hourly_df["wind_deg (°)"].apply(lambda x: get_arrow(x))
 
     # reorder columns
-    new_order = ["wind_speed (km/h)", "wind_gusts (km/h)", "wind_dir", "wind_deg (°)"]
+    new_order = ["wind_speed (km/h)", "wind_gusts (km/h)", "wind_arrow", "wind_dir", "wind_deg (°)"]
     return hourly_df[new_order]
 
 
