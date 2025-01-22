@@ -3,10 +3,6 @@ Here we define functions used for building a forecast alarm for surf (generated 
 '''
 import pandas as pd
 from datetime import datetime
-import requests
-from dotenv import load_dotenv
-import os
-import json
 import openmeteo_requests
 import requests_cache
 from retry_requests import retry
