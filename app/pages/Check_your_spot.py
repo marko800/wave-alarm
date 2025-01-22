@@ -18,6 +18,7 @@ if -90 <= lat <= 90 and -180 <= lon <= 180:
     if st.button('View forecast'):
         print('button clicked!')
 
-        st.table(forecast.request(lat, lon))
+        st.write(forecast.request(lat, lon).to_html(escape=False), unsafe_allow_html=True)
+
 else:
     st.error("Wrong input. Enter valid latitude (-90 to 90) and longitude (-180 to 180).")
