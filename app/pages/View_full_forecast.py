@@ -31,4 +31,5 @@ if st.button('View forecast'):
         data = spots_dict[spot]["forecast"]
 
         st.write(f"{spot}:")
-        st.dataframe(data)
+        #st.dataframe(data)
+        st.write(data.to_html(escape=False), unsafe_allow_html=True)
