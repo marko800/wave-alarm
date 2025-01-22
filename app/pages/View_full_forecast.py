@@ -31,5 +31,4 @@ if st.button('View forecast'):
         data = spots_dict[spot]["forecast"]
 
         st.write(f"{spot}:")
-        st.table(data)
-        #.style.apply(forecast.color_rows, axis=1,args = (spot,spots_dict)))
+        st.dataframe(data)
