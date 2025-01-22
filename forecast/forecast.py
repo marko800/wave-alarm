@@ -127,24 +127,24 @@ def request(lat,lon):
     # massage hourly_df into format that is used in the app
 
     # change time format
-    hourly_df['date'] = hourly_df['date'].dt.strftime('%Y-%m-%d %H:%M')
+    hourly_df["date"] = hourly_df["date"].dt.strftime('%Y-%m-%d %H:%M')
+    hourly_df["time"] = pd.to_datetime(hourly_df["date"]).dt.strftime('%H:%M')
 
     # round data to int
     hourly_df["wind_speed_10m"] = hourly_df["wind_speed_10m"].round(decimals=0).astype(int)
     hourly_df["wind_gusts_10m"] = hourly_df["wind_gusts_10m"].round(decimals=0).astype(int)
     hourly_df["wind_direction_10m"] = hourly_df["wind_direction_10m"].round(decimals=0).astype(int)
 
-    # rename columns and set date & time as index
+    # rename columns and set datum as index
     hourly_df.rename({"wind_speed_10m":"wind_speed (km/h)", "wind_gusts_10m":"wind_gusts (km/h)","wind_direction_10m":"wind_deg (°)"},axis = 1, inplace=True)
-    hourly_df = hourly_df.set_index(hourly_df.date).drop(columns = "date")
+    hourly_df = hourly_df.set_index(hourly_df.date)
 
-    # use windmap to create new column for wind direction
+    # use windmap to create new column for wind direction (and arrow which doesn't work in the app...)
     hourly_df["wind_dir"] = hourly_df["wind_deg (°)"].apply(lambda x: windmap(x))
-
     hourly_df["wind_arrow"] = hourly_df["wind_deg (°)"].apply(lambda x: get_arrow(x))
 
     # reorder columns
-    new_order = ["wind_speed (km/h)", "wind_gusts (km/h)", "wind_arrow", "wind_dir", "wind_deg (°)"]
+    new_order = ["time", "wind_speed (km/h)", "wind_gusts (km/h)", "wind_arrow", "wind_dir", "wind_deg (°)"]
     return hourly_df[new_order]
 
 

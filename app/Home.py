@@ -1,6 +1,6 @@
 import streamlit as st
 import pandas as pd
-
+from datetime import time
 from forecast import forecast
 
 
@@ -41,8 +41,9 @@ if st.button('Get pitted'):
 
     # loop through surf spots
     for spot in spots_dict.keys():
-        # retrieve data for spot
+        # retrieve data for spot, format "time" to datetime
         data = spots_dict[spot]["forecast"]
+        data["time"] = pd.to_datetime(data["time"], format='%H:%M').dt.time
 
         # set alarm counter
         alarm = 0
@@ -55,7 +56,8 @@ if st.button('Get pitted'):
             current_row = data.iloc[row]
             next_row = data.iloc[row + 1]
 
-            if (current_row["wind_speed (km/h)"] > 25) and (current_row["wind_gusts (km/h)"] > 30) and (
+            if (current_row["time"] >= time(5,0)) and (current_row["time"] <= time(23,0)) and (
+                current_row["wind_speed (km/h)"] > 25) and (current_row["wind_gusts (km/h)"] > 30) and (
                 spots_dict[spot]["wind_window"][0] <= current_row["wind_deg (°)"] <= spots_dict[spot]["wind_window"][1]) and (
                 next_row["wind_speed (km/h)"] > 25) and (next_row["wind_gusts (km/h)"] > 30) and (
                 spots_dict[spot]["wind_window"][0] <= next_row["wind_deg (°)"] <= spots_dict[spot]["wind_window"][1]
@@ -70,6 +72,9 @@ if st.button('Get pitted'):
             start_row = min(surf_rows)
             end_row = max(surf_rows)
             surrounding_rows = data.iloc[max(0, start_row - 2) : min(len(data), end_row + 4)]
+
+            # display time correctly
+            surrounding_rows["time"] = surrounding_rows["time"].apply(lambda t: t.strftime('%H:%M'))
 
             st.table(surrounding_rows.style.apply(forecast.color_rows, axis=1, args=(spot, spots_dict)))
 
