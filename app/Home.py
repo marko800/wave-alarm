@@ -55,8 +55,10 @@ if st.button('Get pitted'):
             current_row = data.iloc[row]
             next_row = data.iloc[row + 1]
 
-            if (int(str(current_row["time"]).split(":")[0]) >= 5) and (
-                int(str(current_row["time"]).split(":")[0]) <= 23) and (
+            if (
+                # code below should check for time of day, but it does only work locally so far...
+                #int(str(current_row["time"]).split(":")[0]) >= 5) and (
+                #int(str(current_row["time"]).split(":")[0]) <= 23) and (
                 current_row["wind_speed (km/h)"] > 25) and (current_row["wind_gusts (km/h)"] > 30) and (
                 spots_dict[spot]["wind_window"][0] <= current_row["wind_deg (°)"] <= spots_dict[spot]["wind_window"][1]) and (
                 next_row["wind_speed (km/h)"] > 25) and (next_row["wind_gusts (km/h)"] > 30) and (
