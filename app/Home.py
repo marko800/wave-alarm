@@ -1,6 +1,6 @@
 import streamlit as st
 import pandas as pd
-from datetime import time
+from datetime import datetime, timezone
 from forecast import forecast
 
 
@@ -20,29 +20,41 @@ with st.sidebar:
 
 st.title("Welcome to Kook Alarm!")
 
-st.write("Click the button below to get alarmed for some surfspots in the Baltic sea:")
+st.write('''This app calls every hour a wind forecast from [Open-Meteo](https://open-meteo.com/) for a list of spots in the Baltic.
+         If conditions for surf are found, it displays the relevant part of the forecast. Let's get pitted!''')
 
 
-if st.button('Get pitted'):
-    print('button clicked!')
 
-    # retrieve forecast for all locations, add to dictionary of spots and conditions, then check for surf
+# load spots data from secrets.toml
+spots_raw = st.secrets["general"]["spots"]
+spots = {
+    name: {
+        "lat": spot["lat"],
+        "lon": spot["lon"],
+        "wind_window": spot["wind_window"],
+    }
+    for name, spot in spots_raw.items()
+}
 
-    #load spots data from secrets.toml and convert spots to dictionary
-    spots_raw = st.secrets["general"]["spots"]
-    spots = {name: {
-                    "lat": spot["lat"],
-                    "lon": spot["lon"],
-                    "wind_window": spot["wind_window"],
-                    }  for name, spot in spots_raw.items()}
+# function to fetch forecast automatically
+@st.cache_data(ttl=1 * 60 * 60)
+def fetch_forecast():
+    '''
+    retrieve and process forecasts every hour
+    '''
 
     # get wind forecasts
     spots_dict = forecast.get_forecast(spots)
 
-    # loop through surf spots
-    for spot in spots_dict.keys():
-        # retrieve data for spot
-        data = spots_dict[spot]["forecast"]
+    # store the timestamp
+    last_updated = datetime.now(timezone.utc).isoformat()
+
+    # loop through each spot and save results
+    results = {}
+    for spot, spot_data in spots_dict.items():
+
+        # retrieve data
+        data = spot_data["forecast"]
 
         # set alarm counter
         alarm = 0
@@ -51,33 +63,40 @@ if st.button('Get pitted'):
         surf_rows = []
 
         # check conditions (wind speed/gusts > 25/30 km/h, correct wind direction) in two consecutive rows
-        for row in range(len(data)-1):
+        for row in range(len(data) - 1):
             current_row = data.iloc[row]
             next_row = data.iloc[row + 1]
 
             if (
-                # code below should check for time of day, but it does only work locally so far...
-                #int(str(current_row["time"]).split(":")[0]) >= 5) and (
-                #int(str(current_row["time"]).split(":")[0]) <= 23) and (
-                current_row["wind_speed (km/h)"] > 25) and (current_row["wind_gusts (km/h)"] > 30) and (
-                spots_dict[spot]["wind_window"][0] <= current_row["wind_deg (°)"] <= spots_dict[spot]["wind_window"][1]) and (
-                next_row["wind_speed (km/h)"] > 25) and (next_row["wind_gusts (km/h)"] > 30) and (
-                spots_dict[spot]["wind_window"][0] <= next_row["wind_deg (°)"] <= spots_dict[spot]["wind_window"][1]
-                ):
+                current_row["wind_speed (km/h)"] > 25
+                and current_row["wind_gusts (km/h)"] > 30
+                and spots_dict[spot]["wind_window"][0] <= current_row["wind_deg (°)"] <= spots_dict[spot]["wind_window"][1]
+                and next_row["wind_speed (km/h)"] > 25
+                and next_row["wind_gusts (km/h)"] > 30
+                and spots_dict[spot]["wind_window"][0] <= next_row["wind_deg (°)"] <= spots_dict[spot]["wind_window"][1]
+            ):
                 alarm = 1
                 surf_rows.append(row)
 
-        # if any surf is found, display the relevant part of the forecast
+        # store results
         if alarm == 1:
-            st.write(f"Yeewww, surf's up in {spot}:")
-
             start_row = min(surf_rows)
             end_row = max(surf_rows)
             surrounding_rows = data.iloc[max(0, start_row - 2) : min(len(data), end_row + 4)]
-
-            st.write(surrounding_rows.style.apply(forecast.color_rows, axis=1, args=(spot, spots_dict)).to_html(escape=False), unsafe_allow_html=True)
-
-        # if nothing is found, print a negative message
+            results[spot] = surrounding_rows
         else:
-            st.write(f"Nope, nothing on the horizon for {spot}.")
-            st.write("")
+            results[spot] = None
+
+    return results, last_updated
+
+# retrieve cached data
+forecast_results, last_updated_utc = fetch_forecast()
+
+# display results
+for spot, forecast_data in forecast_results.items():
+    if forecast_data is not None:
+        st.write(f"🌊 Yeewww, surf's up in {spot}:")
+        st.write(forecast_data.style.apply(forecast.color_rows, axis=1, args=(spot, spots)).to_html(escape=False), unsafe_allow_html=True)
+    else:
+        st.write(f"Nothing on the horizon for {spot}.")
+st.write(f"Last updated: {datetime.fromisoformat(last_updated_utc).strftime('%Y-%m-%d %H:%M:%S')}")
