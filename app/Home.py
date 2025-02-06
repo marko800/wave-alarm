@@ -99,4 +99,4 @@ for spot, forecast_data in forecast_results.items():
         st.write(forecast_data.style.apply(forecast.color_rows, axis=1, args=(spot, spots)).to_html(escape=False), unsafe_allow_html=True)
     else:
         st.write(f"Nothing on the horizon for {spot}.")
-st.write(f"Last updated: {datetime.fromisoformat(last_updated_utc).strftime('%Y-%m-%d %H:%M:%S')}")
+st.write(f"Last updated (UTC): {datetime.fromisoformat(last_updated_utc).strftime('%Y-%m-%d %H:%M:%S')}")
