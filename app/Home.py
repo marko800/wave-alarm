@@ -20,9 +20,12 @@ with st.sidebar:
 
 st.title("Welcome to Kook Alarm!")
 
-st.write('''This app calls every hour a wind forecast from [Open-Meteo](https://open-meteo.com/) for a list of spots in the Baltic.
-         If conditions for surf are found, it displays the relevant part of the forecast. Let's get pitted!''')
-
+st.write('''This app monitors a bunch of surf spots in the Baltic. It checks the wind forecast from [Open-Meteo](https://open-meteo.com/) for
+         conditions producing surf (once per hour). If conditions look promising, it displays the relevant part of the forecast.
+          Alternatively, you can use the sidebar menu to view the full forecast for all spots, or retrieve a forecast for your own spot,
+         specified by its latitude and longitude.''')
+st.write("🤙 Let's get pitted! 🤙")
+st.write("")
 
 
 # load spots data from secrets.toml
@@ -93,10 +96,12 @@ def fetch_forecast():
 forecast_results, last_updated_utc = fetch_forecast()
 
 # display results
+st.write(f"Last updated: {datetime.fromisoformat(last_updated_utc).strftime('%Y-%m-%d %H:%M:%S')} (UTC)")
+st.write("")
+
 for spot, forecast_data in forecast_results.items():
     if forecast_data is not None:
         st.write(f"🌊 Yeewww, surf's up in {spot}:")
         st.write(forecast_data.style.apply(forecast.color_rows, axis=1, args=(spot, spots)).to_html(escape=False), unsafe_allow_html=True)
     else:
         st.write(f"Nothing on the horizon for {spot}.")
-st.write(f"Last updated (UTC): {datetime.fromisoformat(last_updated_utc).strftime('%Y-%m-%d %H:%M:%S')}")
